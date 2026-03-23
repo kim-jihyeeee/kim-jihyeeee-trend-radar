@@ -9,6 +9,8 @@ export async function GET(req) {
     const data = await fetchNews(keyword, days);
     return Response.json(data);
   } catch (error) {
+    console.error("search api error:", error);
+
     return Response.json(
       {
         items: [],
