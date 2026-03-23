@@ -1,7 +1,13 @@
 "use client";
-      setLoading(false);
-    }
-  };
+
+import { useState } from "react";
+
+export default function Home() {
+  const [keyword, setKeyword] = useState("");
+  const [newsItems, setNewsItems] = useState([]);
+  const [keywords, setKeywords] = useState([]);
+  const [socialItems, setSocialItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleDownload = async () => {
     const res = await fetch("/api/export", {
