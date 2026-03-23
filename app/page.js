@@ -9,6 +9,33 @@ export default function Home() {
   const [socialItems, setSocialItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const handleSearch = async () => {
+    if (!keyword.trim()) return;
+
+    setLoading(true);
+
+    try {
+      const [newsRes, socialRes] = await Promise.all([
+        fetch(`/api/search?q=${encodeURIComponent(keyword)}`),
+        fetch(`/api/social?q=${encodeURIComponent(keyword)}`)
+      ]);
+
+      const newsData = await newsRes.json();
+      const socialData = await socialRes.json();
+
+      setNewsItems(newsData.items || []);
+      setKeywords(newsData.keywords || []);
+      setSocialItems(socialData.items || []);
+    } catch (error) {
+      console.error("검색 실패:", error);
+      setNewsItems([]);
+      setKeywords([]);
+      setSocialItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDownload = async () => {
     const res = await fetch("/api/export", {
       method: "POST",
@@ -38,8 +65,13 @@ export default function Home() {
           placeholder="키워드 입력"
           style={{ width: 220, padding: 8 }}
         />
-        <button onClick={handleSearch}>{loading ? "분석중..." : "검색"}</button>
-        <button onClick={handleDownload} disabled={!newsItems.length && !keywords.length && !socialItems.length}>
+        <button onClick={handleSearch}>
+          {loading ? "분석중..." : "검색"}
+        </button>
+        <button
+          onClick={handleDownload}
+          disabled={!newsItems.length && !keywords.length && !socialItems.length}
+        >
           엑셀 다운로드
         </button>
       </div>
