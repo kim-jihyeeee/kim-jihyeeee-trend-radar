@@ -6,13 +6,8 @@ export async function GET(req) {
 
   try {
     const data = await fetchNews(keyword);
-
-    return Response.json({
-      result: data.substring(0, 1000), // 일부만 출력
-    });
+    return Response.json({ result: data });
   } catch (e) {
-    return Response.json({
-      result: "데이터 가져오기 실패",
-    });
+    return Response.json({ result: "데이터 가져오기 실패" });
   }
 }
