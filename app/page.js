@@ -11,41 +11,61 @@ export default function Home() {
   const [copies, setCopies] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const runSearch = async (searchKeyword, searchDays) => {
+    const [newsRes, socialRes] = await Promise.all([
+      fetch(`/api/search?q=${encodeURIComponent(searchKeyword)}&days=${searchDays}`),
+      fetch(`/api/social?q=${encodeURIComponent(searchKeyword)}&days=${searchDays}`)
+    ]);
+
+    const newsData = await newsRes.json();
+    const socialData = await socialRes.json();
+
+    setNewsItems(newsData.items || []);
+    setKeywords(newsData.keywords || []);
+    setSocialItems(socialData.items || []);
+
+    try {
+      const copyRes = await fetch("/api/copy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: searchKeyword, keywords: newsData.keywords || [] })
+      });
+
+      const copyData = await copyRes.json();
+      setCopies(copyData.copies || []);
+    } catch (copyError) {
+      console.error("광고 카피 생성 실패:", copyError);
+      setCopies([]);
+    }
+  };
+
   const handleSearch = async () => {
     if (!keyword.trim()) return;
     setLoading(true);
 
     try {
-      const [newsRes, socialRes] = await Promise.all([
-        fetch(`/api/search?q=${encodeURIComponent(keyword)}&days=${days}`),
-        fetch(`/api/social?q=${encodeURIComponent(keyword)}&days=${days}`)
-      ]);
-
-      const newsData = await newsRes.json();
-      const socialData = await socialRes.json();
-
-      console.log("newsData:", newsData);
-      console.log("socialData:", socialData);
-
-      setNewsItems(newsData.items || []);
-      setKeywords(newsData.keywords || []);
-      setSocialItems(socialData.items || []);
-
-      try {
-        const copyRes = await fetch("/api/copy", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keyword, keywords: newsData.keywords || [] })
-        });
-
-        const copyData = await copyRes.json();
-        setCopies(copyData.copies || []);
-      } catch (copyError) {
-        console.error("광고 카피 생성 실패:", copyError);
-        setCopies([]);
-      }
+      await runSearch(keyword, days);
     } catch (error) {
       console.error("검색 실패:", error);
+      setNewsItems([]);
+      setKeywords([]);
+      setSocialItems([]);
+      setCopies([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangeDays = async (newDays) => {
+    setDays(newDays);
+
+    if (!keyword.trim()) return;
+
+    setLoading(true);
+    try {
+      await runSearch(keyword, newDays);
+    } catch (error) {
+      console.error("기간 변경 검색 실패:", error);
       setNewsItems([]);
       setKeywords([]);
       setSocialItems([]);
@@ -99,7 +119,7 @@ export default function Home() {
         {[3, 7, 30, 60].map((d) => (
           <button
             key={d}
-            onClick={() => setDays(d)}
+            onClick={() => handleChangeDays(d)}
             style={{
               padding: "6px 10px",
               border: "1px solid #ddd",
