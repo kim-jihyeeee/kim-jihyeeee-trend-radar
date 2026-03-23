@@ -1,4 +1,4 @@
-import { fetchNews } from "@/lib/fetchNews";
+import { fetchNews } from "../../../lib/fetchNews";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
