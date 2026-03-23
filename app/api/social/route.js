@@ -1,11 +1,12 @@
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const keyword = searchParams.get("q") || "";
+  const days = Number(searchParams.get("days") || 7);
 
   const mock = [
     {
       source: "X",
-      text: `${keyword} 관련 반응이 최근 7일 내 증가하는 흐름`,
+      text: `${keyword} 관련 반응이 최근 ${days}일 내 증가하는 흐름`,
       sentiment: "중립"
     },
     {
