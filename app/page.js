@@ -4,20 +4,21 @@ import { useState } from "react";
 
 export default function Home() {
   const [keyword, setKeyword] = useState("");
+  const [days, setDays] = useState(7);
   const [newsItems, setNewsItems] = useState([]);
   const [keywords, setKeywords] = useState([]);
   const [socialItems, setSocialItems] = useState([]);
+  const [copies, setCopies] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
     if (!keyword.trim()) return;
-
     setLoading(true);
 
     try {
       const [newsRes, socialRes] = await Promise.all([
-        fetch(`/api/search?q=${encodeURIComponent(keyword)}`),
-        fetch(`/api/social?q=${encodeURIComponent(keyword)}`)
+        fetch(`/api/search?q=${encodeURIComponent(keyword)}&days=${days}`),
+        fetch(`/api/social?q=${encodeURIComponent(keyword)}&days=${days}`)
       ]);
 
       const newsData = await newsRes.json();
@@ -26,11 +27,21 @@ export default function Home() {
       setNewsItems(newsData.items || []);
       setKeywords(newsData.keywords || []);
       setSocialItems(socialData.items || []);
+
+      const copyRes = await fetch("/api/copy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword, keywords: newsData.keywords || [] })
+      });
+
+      const copyData = await copyRes.json();
+      setCopies(copyData.copies || []);
     } catch (error) {
-      console.error("검색 실패:", error);
+      console.error(error);
       setNewsItems([]);
       setKeywords([]);
       setSocialItems([]);
+      setCopies([]);
     } finally {
       setLoading(false);
     }
@@ -58,7 +69,7 @@ export default function Home() {
     <div style={{ padding: 40, fontFamily: "Arial, sans-serif" }}>
       <h1>🔥 Trend Radar</h1>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <input
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
@@ -76,6 +87,25 @@ export default function Home() {
         </button>
       </div>
 
+      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        {[3, 7, 30, 60].map((d) => (
+          <button
+            key={d}
+            onClick={() => setDays(d)}
+            style={{
+              padding: "6px 10px",
+              border: "1px solid #ddd",
+              background: days === d ? "#111" : "#fff",
+              color: days === d ? "#fff" : "#000",
+              borderRadius: 6,
+              cursor: "pointer"
+            }}
+          >
+            최근 {d}일
+          </button>
+        ))}
+      </div>
+
       <section style={{ marginBottom: 28 }}>
         <h2>뉴스 결과</h2>
         {newsItems.map((item, idx) => (
@@ -86,35 +116,6 @@ export default function Home() {
             <div style={{ fontSize: 13, color: "#555" }}>
               {item.pubDate} / {item.sentiment} / {item.source}
             </div>
-          </div>
-        ))}
-      </section>
-
-      <section style={{ marginBottom: 28 }}>
-        <h2>확장 키워드</h2>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {keywords.map((item, idx) => (
-            <span
-              key={idx}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 20,
-                padding: "6px 10px",
-                fontSize: 13
-              }}
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2>SNS / 커뮤니티 트렌드</h2>
-        {socialItems.map((item, idx) => (
-          <div key={idx} style={{ marginBottom: 10 }}>
-            <strong>[{item.source}]</strong> {item.text}
-            <div style={{ fontSize: 13, color: "#555" }}>{item.sentiment}</div>
           </div>
         ))}
       </section>
