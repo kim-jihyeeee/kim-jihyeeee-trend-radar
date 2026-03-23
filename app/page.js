@@ -4,10 +4,10 @@ import { useState } from "react";
 
 export default function Home() {
   const [keyword, setKeyword] = useState("");
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState([]);
 
   const handleSearch = async () => {
-    const res = await fetch(`/api/search?q=${keyword}`);
+    const res = await fetch(`/api/search?q=${encodeURIComponent(keyword)}`);
     const data = await res.json();
     setResult(data.result);
   };
@@ -24,7 +24,15 @@ export default function Home() {
 
       <button onClick={handleSearch}>검색</button>
 
-      <pre>{JSON.stringify(result, null, 2)}</pre>
+      <div style={{ marginTop: 20 }}>
+        {result.map((item, idx) => (
+          <div key={idx} style={{ marginBottom: 15 }}>
+            <a href={item.link} target="_blank">
+              <b>{item.title}</b>
+            </a>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
