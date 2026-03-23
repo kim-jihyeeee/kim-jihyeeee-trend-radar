@@ -7,10 +7,8 @@ export async function GET() {
   } catch (error) {
     return Response.json(
       {
-        source: "",
-        collectedAt: new Date().toISOString(),
         items: [],
-        message: "Daum 실시간 트렌드 데이터를 불러오지 못했습니다."
+        message: "Daum 실검 실패"
       },
       { status: 500 }
     );
