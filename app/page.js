@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const [keyword, setKeyword] = useState("");
@@ -10,7 +10,25 @@ export default function Home() {
   const [socialItems, setSocialItems] = useState([]);
   const [copies, setCopies] = useState([]);
   const [copyCategory, setCopyCategory] = useState("");
+  const [daumTrends, setDaumTrends] = useState([]);
+  const [daumCollectedAt, setDaumCollectedAt] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const loadDaumTrends = async () => {
+    try {
+      const res = await fetch("/api/daum-trends");
+      const data = await res.json();
+      setDaumTrends(data.items || []);
+      setDaumCollectedAt(data.collectedAt || "");
+    } catch (e) {
+      setDaumTrends([]);
+      setDaumCollectedAt("");
+    }
+  };
+
+  useEffect(() => {
+    loadDaumTrends();
+  }, []);
 
   const runSearch = async (searchKeyword, searchDays) => {
     const [newsRes, socialRes] = await Promise.all([
@@ -83,6 +101,19 @@ export default function Home() {
     }
   };
 
+  const handleTrendClick = async (trendKeyword) => {
+    setKeyword(trendKeyword);
+    setLoading(true);
+
+    try {
+      await runSearch(trendKeyword, days);
+    } catch (error) {
+      console.error("실검 키워드 검색 실패:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDownload = async () => {
     const res = await fetch("/api/export", {
       method: "POST",
@@ -146,67 +177,145 @@ export default function Home() {
         현재 선택 기간: 최근 {days}일
       </div>
 
-      <section style={{ marginBottom: 28 }}>
-        <h2>뉴스 결과</h2>
-        {newsItems.length === 0 ? (
-          <div style={{ color: "#666", fontSize: 14 }}>표시할 뉴스가 없습니다.</div>
-        ) : (
-          newsItems.map((item, idx) => (
-            <div key={idx} style={{ marginBottom: 14 }}>
-              <a href={item.link} target="_blank" rel="noreferrer">
-                <strong>{item.title}</strong>
-              </a>
-              <div style={{ fontSize: 13, color: "#555" }}>
-                {item.pubDate} / {item.sentiment} / {item.source}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "2fr 1fr",
+          gap: 32,
+          alignItems: "start"
+        }}
+      >
+        {/* 왼쪽 영역 */}
+        <div>
+          <section style={{ marginBottom: 28 }}>
+            <h2>뉴스 결과</h2>
+            {newsItems.length === 0 ? (
+              <div style={{ color: "#666", fontSize: 14 }}>표시할 뉴스가 없습니다.</div>
+            ) : (
+              newsItems.map((item, idx) => (
+                <div key={idx} style={{ marginBottom: 14 }}>
+                  <a href={item.link} target="_blank" rel="noreferrer">
+                    <strong>{item.title}</strong>
+                  </a>
+                  <div style={{ fontSize: 13, color: "#555" }}>
+                    {item.pubDate} / {item.sentiment} / {item.source}
+                  </div>
+                </div>
+              ))
+            )}
+          </section>
+
+          <section style={{ marginBottom: 28 }}>
+            <h2>확장 키워드</h2>
+            {keywords.length === 0 ? (
+              <div style={{ color: "#666", fontSize: 14 }}>표시할 확장 키워드가 없습니다.</div>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {keywords.map((item, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: 20,
+                      padding: "6px 10px",
+                      fontSize: 13
+                    }}
+                  >
+                    {item}
+                  </span>
+                ))}
               </div>
+            )}
+          </section>
+
+          <section style={{ marginBottom: 28 }}>
+            <h2>SNS / 커뮤니티 트렌드</h2>
+            {socialItems.length === 0 ? (
+              <div style={{ color: "#666", fontSize: 14 }}>
+                표시할 SNS/커뮤니티 데이터가 없습니다.
+              </div>
+            ) : (
+              socialItems.map((item, idx) => (
+                <div key={idx} style={{ marginBottom: 12 }}>
+                  <strong>[{item.source}]</strong>{" "}
+                  {item.link ? (
+                    <a href={item.link} target="_blank" rel="noreferrer">
+                      {item.text}
+                    </a>
+                  ) : (
+                    item.text
+                  )}
+                  <div style={{ fontSize: 13, color: "#555" }}>{item.sentiment}</div>
+                </div>
+              ))
+            )}
+          </section>
+
+          <section style={{ marginBottom: 28 }}>
+            <h2>광고 카피 추천 {copyCategory ? `(${copyCategory})` : ""}</h2>
+            {copies.length === 0 ? (
+              <div style={{ color: "#666", fontSize: 14 }}>표시할 광고 카피가 없습니다.</div>
+            ) : (
+              copies.map((item, idx) => (
+                <div key={idx} style={{ marginBottom: 8 }}>
+                  ✏️ {item}
+                </div>
+              ))
+            )}
+          </section>
+        </div>
+
+        {/* 오른쪽 영역 */}
+        <div>
+          <section
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 12,
+              padding: 20,
+              position: "sticky",
+              top: 20
+            }}
+          >
+            <h2 style={{ marginTop: 0 }}>Daum 실검</h2>
+
+            {daumCollectedAt ? (
+              <div style={{ fontSize: 12, color: "#666", marginBottom: 14 }}>
+                수집 시각: {daumCollectedAt}
+              </div>
+            ) : null}
+
+            <div style={{ marginBottom: 12 }}>
+              <button onClick={loadDaumTrends}>새로고침</button>
             </div>
-          ))
-        )}
-      </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <h2>확장 키워드</h2>
-        {keywords.length === 0 ? (
-          <div style={{ color: "#666", fontSize: 14 }}>표시할 확장 키워드가 없습니다.</div>
-        ) : (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {keywords.map((item, idx) => (
-              <span
-                key={idx}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: 20,
-                  padding: "6px 10px",
-                  fontSize: 13
-                }}
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        )}
-      </section>
-
-     <section style={{ marginBottom: 28 }}>
-  <h2>SNS / 커뮤니티 트렌드</h2>
-  {socialItems.length === 0 ? (
-    <div style={{ color: "#666", fontSize: 14 }}>표시할 SNS/커뮤니티 데이터가 없습니다.</div>
-  ) : (
-    socialItems.map((item, idx) => (
-      <div key={idx} style={{ marginBottom: 12 }}>
-        <strong>[{item.source}]</strong>{" "}
-        {item.link ? (
-          <a href={item.link} target="_blank" rel="noreferrer">
-            {item.text}
-          </a>
-        ) : (
-          item.text
-        )}
-        <div style={{ fontSize: 13, color: "#555" }}>{item.sentiment}</div>
+            {daumTrends.length === 0 ? (
+              <div style={{ color: "#666", fontSize: 14 }}>
+                표시할 Daum 실검 데이터가 없습니다.
+              </div>
+            ) : (
+              daumTrends.map((item) => (
+                <button
+                  key={`${item.rank}-${item.keyword}`}
+                  onClick={() => handleTrendClick(item.keyword)}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    marginBottom: 10,
+                    padding: "10px 12px",
+                    border: "1px solid #ddd",
+                    borderRadius: 8,
+                    background: "#fff",
+                    cursor: "pointer"
+                  }}
+                >
+                  {item.rank}위 · {item.keyword}
+                </button>
+              ))
+            )}
+          </section>
+        </div>
       </div>
-    ))
-  )}
-</section>
     </div>
   );
 }
