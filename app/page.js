@@ -24,20 +24,28 @@ export default function Home() {
       const newsData = await newsRes.json();
       const socialData = await socialRes.json();
 
+      console.log("newsData:", newsData);
+      console.log("socialData:", socialData);
+
       setNewsItems(newsData.items || []);
       setKeywords(newsData.keywords || []);
       setSocialItems(socialData.items || []);
 
-      const copyRes = await fetch("/api/copy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, keywords: newsData.keywords || [] })
-      });
+      try {
+        const copyRes = await fetch("/api/copy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keyword, keywords: newsData.keywords || [] })
+        });
 
-      const copyData = await copyRes.json();
-      setCopies(copyData.copies || []);
+        const copyData = await copyRes.json();
+        setCopies(copyData.copies || []);
+      } catch (copyError) {
+        console.error("광고 카피 생성 실패:", copyError);
+        setCopies([]);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("검색 실패:", error);
       setNewsItems([]);
       setKeywords([]);
       setSocialItems([]);
@@ -69,7 +77,7 @@ export default function Home() {
     <div style={{ padding: 40, fontFamily: "Arial, sans-serif" }}>
       <h1>🔥 Trend Radar</h1>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         <input
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
@@ -87,7 +95,7 @@ export default function Home() {
         </button>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
         {[3, 7, 30, 60].map((d) => (
           <button
             key={d}
@@ -108,16 +116,70 @@ export default function Home() {
 
       <section style={{ marginBottom: 28 }}>
         <h2>뉴스 결과</h2>
-        {newsItems.map((item, idx) => (
-          <div key={idx} style={{ marginBottom: 14 }}>
-            <a href={item.link} target="_blank" rel="noreferrer">
-              <strong>{item.title}</strong>
-            </a>
-            <div style={{ fontSize: 13, color: "#555" }}>
-              {item.pubDate} / {item.sentiment} / {item.source}
+        {newsItems.length === 0 ? (
+          <div style={{ color: "#666", fontSize: 14 }}>표시할 뉴스가 없습니다.</div>
+        ) : (
+          newsItems.map((item, idx) => (
+            <div key={idx} style={{ marginBottom: 14 }}>
+              <a href={item.link} target="_blank" rel="noreferrer">
+                <strong>{item.title}</strong>
+              </a>
+              <div style={{ fontSize: 13, color: "#555" }}>
+                {item.pubDate} / {item.sentiment} / {item.source}
+              </div>
             </div>
+          ))
+        )}
+      </section>
+
+      <section style={{ marginBottom: 28 }}>
+        <h2>확장 키워드</h2>
+        {keywords.length === 0 ? (
+          <div style={{ color: "#666", fontSize: 14 }}>표시할 확장 키워드가 없습니다.</div>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {keywords.map((item, idx) => (
+              <span
+                key={idx}
+                style={{
+                  border: "1px solid #ddd",
+                  borderRadius: 20,
+                  padding: "6px 10px",
+                  fontSize: 13
+                }}
+              >
+                {item}
+              </span>
+            ))}
           </div>
-        ))}
+        )}
+      </section>
+
+      <section style={{ marginBottom: 28 }}>
+        <h2>SNS / 커뮤니티 트렌드</h2>
+        {socialItems.length === 0 ? (
+          <div style={{ color: "#666", fontSize: 14 }}>표시할 SNS/커뮤니티 데이터가 없습니다.</div>
+        ) : (
+          socialItems.map((item, idx) => (
+            <div key={idx} style={{ marginBottom: 10 }}>
+              <strong>[{item.source}]</strong> {item.text}
+              <div style={{ fontSize: 13, color: "#555" }}>{item.sentiment}</div>
+            </div>
+          ))
+        )}
+      </section>
+
+      <section style={{ marginBottom: 28 }}>
+        <h2>광고 카피 추천</h2>
+        {copies.length === 0 ? (
+          <div style={{ color: "#666", fontSize: 14 }}>표시할 광고 카피가 없습니다.</div>
+        ) : (
+          copies.map((item, idx) => (
+            <div key={idx} style={{ marginBottom: 8 }}>
+              ✏️ {item}
+            </div>
+          ))
+        )}
       </section>
     </div>
   );
