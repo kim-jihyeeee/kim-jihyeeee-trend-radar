@@ -24,7 +24,7 @@ export default function Home() {
 
       <button onClick={handleSearch}>검색</button>
 
-      <pre>{result}</pre>
+      <pre>{JSON.stringify(result, null, 2)}</pre>
     </div>
   );
 }
