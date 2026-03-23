@@ -187,32 +187,26 @@ export default function Home() {
         )}
       </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <h2>SNS / 커뮤니티 트렌드</h2>
-        {socialItems.length === 0 ? (
-          <div style={{ color: "#666", fontSize: 14 }}>표시할 SNS/커뮤니티 데이터가 없습니다.</div>
+     <section style={{ marginBottom: 28 }}>
+  <h2>SNS / 커뮤니티 트렌드</h2>
+  {socialItems.length === 0 ? (
+    <div style={{ color: "#666", fontSize: 14 }}>표시할 SNS/커뮤니티 데이터가 없습니다.</div>
+  ) : (
+    socialItems.map((item, idx) => (
+      <div key={idx} style={{ marginBottom: 12 }}>
+        <strong>[{item.source}]</strong>{" "}
+        {item.link ? (
+          <a href={item.link} target="_blank" rel="noreferrer">
+            {item.text}
+          </a>
         ) : (
-          socialItems.map((item, idx) => (
-            <div key={idx} style={{ marginBottom: 10 }}>
-              <strong>[{item.source}]</strong> {item.text}
-              <div style={{ fontSize: 13, color: "#555" }}>{item.sentiment}</div>
-            </div>
-          ))
+          item.text
         )}
-      </section>
-
-      <section style={{ marginBottom: 28 }}>
-        <h2>광고 카피 추천 {copyCategory ? `(${copyCategory})` : ""}</h2>
-        {copies.length === 0 ? (
-          <div style={{ color: "#666", fontSize: 14 }}>표시할 광고 카피가 없습니다.</div>
-        ) : (
-          copies.map((item, idx) => (
-            <div key={idx} style={{ marginBottom: 8 }}>
-              ✏️ {item}
-            </div>
-          ))
-        )}
-      </section>
+        <div style={{ fontSize: 13, color: "#555" }}>{item.sentiment}</div>
+      </div>
+    ))
+  )}
+</section>
     </div>
   );
 }
