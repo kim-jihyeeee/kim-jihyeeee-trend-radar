@@ -9,6 +9,7 @@ export default function Home() {
   const [keywords, setKeywords] = useState([]);
   const [socialItems, setSocialItems] = useState([]);
   const [copies, setCopies] = useState([]);
+  const [copyCategory, setCopyCategory] = useState("");
   const [loading, setLoading] = useState(false);
 
   const runSearch = async (searchKeyword, searchDays) => {
@@ -28,21 +29,26 @@ export default function Home() {
       const copyRes = await fetch("/api/copy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword: searchKeyword, keywords: newsData.keywords || [] })
+        body: JSON.stringify({
+          keyword: searchKeyword,
+          keywords: newsData.keywords || []
+        })
       });
 
       const copyData = await copyRes.json();
       setCopies(copyData.copies || []);
+      setCopyCategory(copyData.category || "");
     } catch (copyError) {
       console.error("광고 카피 생성 실패:", copyError);
       setCopies([]);
+      setCopyCategory("");
     }
   };
 
   const handleSearch = async () => {
     if (!keyword.trim()) return;
-    setLoading(true);
 
+    setLoading(true);
     try {
       await runSearch(keyword, days);
     } catch (error) {
@@ -51,6 +57,7 @@ export default function Home() {
       setKeywords([]);
       setSocialItems([]);
       setCopies([]);
+      setCopyCategory("");
     } finally {
       setLoading(false);
     }
@@ -70,6 +77,7 @@ export default function Home() {
       setKeywords([]);
       setSocialItems([]);
       setCopies([]);
+      setCopyCategory("");
     } finally {
       setLoading(false);
     }
@@ -134,6 +142,10 @@ export default function Home() {
         ))}
       </div>
 
+      <div style={{ marginBottom: 16, fontSize: 14, color: "#555" }}>
+        현재 선택 기간: 최근 {days}일
+      </div>
+
       <section style={{ marginBottom: 28 }}>
         <h2>뉴스 결과</h2>
         {newsItems.length === 0 ? (
@@ -190,7 +202,7 @@ export default function Home() {
       </section>
 
       <section style={{ marginBottom: 28 }}>
-        <h2>광고 카피 추천</h2>
+        <h2>광고 카피 추천 {copyCategory ? `(${copyCategory})` : ""}</h2>
         {copies.length === 0 ? (
           <div style={{ color: "#666", fontSize: 14 }}>표시할 광고 카피가 없습니다.</div>
         ) : (
